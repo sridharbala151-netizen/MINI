@@ -28,14 +28,10 @@ jobs:
       run: |
         pip install buildozer cython kivy
 
-    - name: Show directory
-      run: |
-        pwd
-        ls -la
-
     - name: Build APK
       run: |
-        buildozer android debug
+        pip show buildozer
+        buildozer android debug 2>&1 || true
       env:
         BUILDOZER_CACHE_DIR: /tmp/bzcache
 

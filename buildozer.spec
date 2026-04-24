@@ -16,5 +16,6 @@ android.allow_backup = True
 # Source files
 source.include_exts = py,json,png
 
-# Main entry point
-main.entrypoint = src/main.py
+# Keep original directory structure
+presplash.filename = %(source.dir)s/presplash.png
+icon.filename = %(source.dir)s/icon.png
