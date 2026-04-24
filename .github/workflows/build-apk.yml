@@ -22,21 +22,53 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt update
-        sudo apt install -y python3-pip libffi-dev libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb-dev libexpat1-dev liblzma-dev libbz2-dev libtool libavcodec-dev libavformat-dev libsdl2-dev
+        sudo apt install -y \
+          python3-pip \
+          libffi-dev \
+          libssl-dev \
+          zlib1g-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          libreadline-dev \
+          libsqlite3-dev \
+          libgdbm-dev \
+          libdb-dev \
+          libexpat1-dev \
+          liblzma-dev \
+          libbz2-dev \
+          git \
+          zip \
+          unzip
 
     - name: Install Python dependencies
       run: |
-        pip install buildozer cython kivy
+        pip install --upgrade pip
+        pip install buildozer==1.5.0
+
+    - name: Clone Kivy dependencies
+      run: |
+        mkdir -p .buildozer
+        cd .buildozer
+        git clone --depth 1 https://github.com/kivy/python-for-android.git
+        cd python-for-android
+        git checkout HEAD -- recipes/kivy
 
     - name: Build APK
       run: |
-        pip show buildozer
-        buildozer android debug 2>&1 || true
+        buildozer android debug
+      working-directory: .
       env:
         BUILDOZER_CACHE_DIR: /tmp/bzcache
+        BUILDOZER_WARN_ON_MISSING_LIBS: 1
+
+    - name: Find APK
+      run: |
+        find . -name "*.apk" -type f 2>/dev/null
+        ls -la bin/ 2>/dev/null || echo "No bin directory"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
+      if: fileExists('bin/*.apk')
       with:
         name: bill-generator-apk
         path: bin/*.apk
