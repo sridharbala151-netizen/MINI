@@ -22,11 +22,16 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt update
-        sudo apt install -y python3-pip libffi-dev libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb-dev libexpat1-dev liblzma-dev libbz2-dev
+        sudo apt install -y python3-pip libffi-dev libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb-dev libexpat1-dev liblzma-dev libbz2-dev libtool libavcodec-dev libavformat-dev libsdl2-dev
 
     - name: Install Python dependencies
       run: |
         pip install buildozer cython kivy
+
+    - name: Show directory
+      run: |
+        pwd
+        ls -la
 
     - name: Build APK
       run: |

@@ -14,7 +14,7 @@ android.accept_sdk_license = True
 android.allow_backup = True
 
 # Source files
-source.include_exts = py,json
+source.include_exts = py,json,png
 
 # Main entry point
-main.filename = main.py
+main.entrypoint = src/main.py
