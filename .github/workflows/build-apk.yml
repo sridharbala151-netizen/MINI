@@ -1,0 +1,42 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y python3-pip libffi-dev libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb-dev libexpat1-dev liblzma-dev libbz2-dev
+
+    - name: Install Python dependencies
+      run: |
+        pip install buildozer cython kivy
+
+    - name: Build APK
+      run: |
+        buildozer android debug
+      env:
+        BUILDOZER_CACHE_DIR: /tmp/bzcache
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: bill-generator-apk
+        path: bin/*.apk
+        retention-days: 5
