@@ -30,25 +30,42 @@ jobs:
             libncursesw5-dev \
             libtinfo5 \
             cmake \
-            libopenjdk-11-dev \
+            libopenjdk-17-jdk \
             unzip \
-            swig
+            swig \
+            ant \
+            zip
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
-          pip install buildozer kivy python-for-android cython
+          pip install buildozer==1.5.0 kivy==2.3.0 python-for-android==2024.6.2 cython
 
-      - name: Clone Kivy dependencies
+      - name: Initialize Buildozer
         run: |
-          mkdir -p ~/.local/share/kivy
-          git clone https://github.com/kivy/kivy.git /tmp/kivy
-          git clone https://github.com/kivy/buildozer.git /tmp/buildozer
+          buildozer init
+        env:
+          ANDROIDSDK: /opt/android-sdk
+          ANDROIDNDK: /opt/android-ndk
+          ANDROIDNDKVER: "r25b"
+          ANDROIDAPI: "21"
+          ANDROIDAPIFORBUILD: "29"
 
       - name: Build APK
         run: |
-          buildozer apk --debug
+          buildozer apk debug --verbose
         env:
+          ANDROIDSDK: /opt/android-sdk
+          ANDROIDNDK: /opt/android-ndk
+          ANDROIDNDKVER: "r25b"
+          ANDROIDAPI: "21"
+          ANDROIDAPIFORBUILD: "29"
           BUILDZEROTMPDIR: /tmp/buildozer_tmp
           BUILDZEROCACHE: /tmp/buildozer_cache
 
@@ -57,3 +74,4 @@ jobs:
         with:
           name: bill-generator-apk
           path: ./*.apk
+          retention-days: 5
