@@ -44,27 +44,14 @@ class MainScreen(Screen):
     def load_store_items(self):
         """Load store items from JSON file"""
         self.store_items = {}
-        # Try multiple locations for Android compatibility
-        import sys
-        if getattr(sys, 'frozen', False):
-            # Running as compiled app (Android)
-            from kivy.app import App
-            app_dir = App.get_running_app().user_data_dir
-            paths_to_try = [
-                os.path.join(app_dir, 'store_items.json'),
-                os.path.join(os.path.dirname(sys.executable), 'store_items.json'),
-            ]
+        if os.path.exists("store_items.json"):
+            try:
+                with open("store_items.json", 'r') as f:
+                    self.store_items = json.load(f)
+            except:
+                self.store_items = {}
         else:
-            paths_to_try = ['store_items.json', 'src/store_items.json']
-
-        for path in paths_to_try:
-            if os.path.exists(path):
-                try:
-                    with open(path, 'r') as f:
-                        self.store_items = json.load(f)
-                    break
-                except:
-                    pass
+            self.store_items = {}
 
     def build_ui(self):
         """Build the main UI"""
@@ -128,7 +115,7 @@ class MainScreen(Screen):
         bill_scroll.add_widget(self.bill_items_container)
 
         # Total Label
-        self.total_label = Label(text='Total: ₹0.00', font_size='18sp', size_hint_y=None,
+        self.total_label = Label(text='Total: 0.00', font_size='18sp', size_hint_y=None,
                                 height=40, color=get_color_from_hex('#27ae60'))
 
         # Action Buttons
@@ -165,7 +152,7 @@ class MainScreen(Screen):
         self.product_list.clear_widgets()
         for item_name, price in sorted(self.store_items.items()):
             btn = Button(
-                text=f'{item_name}\n₹{price:.2f}',
+                text=f'{item_name}\n{price:.2f}',
                 font_size='12sp',
                 size_hint_y=None,
                 height=60,
@@ -219,10 +206,10 @@ class MainScreen(Screen):
         for item in self.items:
             self.bill_items_container.add_widget(Label(text=item.name[:10], font_size='10sp', size_hint_x=0.3))
             self.bill_items_container.add_widget(Label(text=str(item.quantity), font_size='10sp', size_hint_x=0.2))
-            self.bill_items_container.add_widget(Label(text=f'₹{item.price:.2f}', font_size='10sp', size_hint_x=0.25))
-            self.bill_items_container.add_widget(Label(text=f'₹{item.total:.2f}', font_size='10sp', size_hint_x=0.25))
+            self.bill_items_container.add_widget(Label(text=f'{item.price:.2f}', font_size='10sp', size_hint_x=0.25))
+            self.bill_items_container.add_widget(Label(text=f'{item.total:.2f}', font_size='10sp', size_hint_x=0.25))
             total += item.total
-        self.total_label.text = f'Total: ₹{total:.2f}'
+        self.total_label.text = f'Total: {total:.2f}'
 
     def clear_bill(self, instance):
         """Clear all items from bill"""
@@ -243,15 +230,9 @@ class MainScreen(Screen):
         bill_number = f"B-{datetime.now().strftime('%d%m%y%H%M')}"
         customer = self.customer_input.text or 'N/A'
 
-        # Determine save directory (Android compatible)
-        from kivy.app import App
-        if getattr(sys, 'frozen', False):
-            bills_dir = os.path.join(App.get_running_app().user_data_dir, 'bills')
-        else:
-            bills_dir = 'bills'
-
-        if not os.path.exists(bills_dir):
-            os.makedirs(bills_dir)
+        # Create bills directory
+        if not os.path.exists('bills'):
+            os.makedirs('bills')
 
         # Generate bill text
         bill_text = "=" * 50 + "\n"
@@ -266,17 +247,17 @@ class MainScreen(Screen):
 
         total = 0
         for idx, item in enumerate(self.items, 1):
-            bill_text += f"{idx:<4} {item.name:<15} {item.quantity:>5.1f} ₹{item.price:>6.2f} ₹{item.total:>6.2f}\n"
+            bill_text += f"{idx:<4} {item.name:<15} {item.quantity:>5.1f} {item.price:>6.2f} {item.total:>6.2f}\n"
             total += item.total
 
         bill_text += "=" * 50 + "\n"
-        bill_text += f"{'TOTAL':>36} ₹{total:.2f}\n"
+        bill_text += f"{'TOTAL':>36} {total:.2f}\n"
         bill_text += "=" * 50 + "\n"
         bill_text += "\n     Thank You for Your Business!\n"
         bill_text += "=" * 50 + "\n"
 
         # Save to file
-        filename = f'{bills_dir}/{bill_number}.txt'
+        filename = f'bills/{bill_number}.txt'
         with open(filename, 'w') as f:
             f.write(bill_text)
 
@@ -291,9 +272,9 @@ class MainScreen(Screen):
         msg = "ITEMS IN BILL\n" + "-" * 30 + "\n"
         total = 0
         for idx, item in enumerate(self.items, 1):
-            msg += f"{idx}. {item.name} x{qty} = ₹{item.total:.2f}\n"
+            msg += f"{idx}. {item.name} x{self.qty_input.text} = {item.total:.2f}\n"
             total += item.total
-        msg += "-" * 30 + f"\nTOTAL: ₹{total:.2f}"
+        msg += "-" * 30 + f"\nTOTAL: {total:.2f}"
 
         self.show_popup('All Items', msg)
 
