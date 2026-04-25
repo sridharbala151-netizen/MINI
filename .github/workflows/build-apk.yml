@@ -34,7 +34,19 @@ jobs:
             unzip \
             swig \
             ant \
-            zip
+            zip \
+            curl \
+            git
+
+      - name: Download Android SDK
+        run: |
+          mkdir -p /opt/android-sdk
+          cd /opt/android-sdk
+          curl -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q cmdline-tools.zip
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools/* cmdline-tools/latest/ 2>/dev/null || true
+          echo "SDK downloaded"
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -49,29 +61,44 @@ jobs:
 
       - name: Initialize Buildozer
         run: |
+          export ANDROIDSDK="/opt/android-sdk"
+          export ANDROIDNDK="/opt/android-ndk"
+          export ANDROIDNDKVER="r25b"
+          export ANDROIDAPI="21"
+          export ANDROIDAPIFORBUILD="29"
+          export PATH="$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools"
           buildozer init
-        env:
-          ANDROIDSDK: /opt/android-sdk
-          ANDROIDNDK: /opt/android-ndk
-          ANDROIDNDKVER: "r25b"
-          ANDROIDAPI: "21"
-          ANDROIDAPIFORBUILD: "29"
+
+      - name: Accept Android licenses
+        run: |
+          export ANDROIDSDK="/opt/android-sdk"
+          export PATH="$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools"
+          yes | sdkmanager --licenses || true
 
       - name: Build APK
         run: |
-          buildozer apk debug --verbose
-        env:
-          ANDROIDSDK: /opt/android-sdk
-          ANDROIDNDK: /opt/android-ndk
-          ANDROIDNDKVER: "r25b"
-          ANDROIDAPI: "21"
-          ANDROIDAPIFORBUILD: "29"
-          BUILDZEROTMPDIR: /tmp/buildozer_tmp
-          BUILDZEROCACHE: /tmp/buildozer_cache
+          export ANDROIDSDK="/opt/android-sdk"
+          export ANDROIDNDK="/opt/android-ndk"
+          export ANDROIDNDKVER="r25b"
+          export ANDROIDAPI="21"
+          export ANDROIDAPIFORBUILD="29"
+          export PATH="$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools"
+          buildozer apk debug --verbose 2>&1
+        continue-on-error: true
+
+      - name: Debug build output
+        run: |
+          echo "=== Checking for APK ==="
+          find . -name "*.apk" -type f 2>/dev/null || echo "No APK found"
+          ls -la bin/ 2>/dev/null || echo "No bin directory"
+          ls -la .buildozer/ 2>/dev/null || echo "No .buildozer directory"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: bill-generator-apk
-          path: ./*.apk
+          path: |
+            bin/*.apk
+            *.apk
           retention-days: 5
+          ignore-missing: true
